@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Graz University of Technology
+ * Copyright (c) 2016, University of Bristol - http://www.bris.ac.uk/
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,25 +27,24 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
+/*---------------------------------------------------------------------------*/
 /**
- * \file
- *    BLE radio hardware abstraction for the TI CC26XX controller
+ * \addtogroup sphere
+ * @{
  *
- * \author
- *    Michael Spoerk <michael.spoerk@tugraz.at>
+ * \file
+ * Header file for the SPHERE SPES-2 Hardware Watchdog driver
  */
 /*---------------------------------------------------------------------------*/
-
-#ifndef BLE_HAL_CC26XX_H_
-#define BLE_HAL_CC26XX_H_
-
-#include "os/dev/ble-hal.h"
-
-extern const struct ble_hal_driver ble_hal;
-
-void ble_hal_setup_buffers(void);
-/* process used by rf-core.c to generate interrupt polls */
-PROCESS_NAME(ble_hal_interrupt_handler);
-
-#endif /* BLE_HAL_CC26XX_H_ */
+#ifndef HW_WATCHDOG_H_
+#define HW_WATCHDOG_H_
+/*---------------------------------------------------------------------------*/
+void hw_watchdog_init(void);
+void hw_watchdog_periodic(void);
+void hw_watchdog_reboot(void);
+/*---------------------------------------------------------------------------*/
+#endif /* HW_WATCHDOG_H_ */
+/*---------------------------------------------------------------------------*/
+/**
+ * @}
+ */

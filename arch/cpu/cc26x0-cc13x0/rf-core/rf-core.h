@@ -143,7 +143,7 @@ typedef struct rf_core_primary_mode_s {
   /**
    * \brief Offset of the end of SFD when compared to the radio HW-generated timestamp
    */
-   int16_t sfd_timestamp_offset;
+  int16_t sfd_timestamp_offset;
 } rf_core_primary_mode_t;
 /*---------------------------------------------------------------------------*/
 /* RF Command status constants - Correspond to values in the CMDSTA register */
@@ -460,6 +460,17 @@ void rf_core_setup_interrupts(void);
  * \sa rf_core_cmd_done_dis()
  */
 void rf_core_cmd_done_en(bool fg);
+
+/**
+ * \brief Enable interrupt on TX_DONE.
+ * \param poll_mode true if the driver is in poll mode
+ *
+ * This is used within TX routines in order to be able to sleep the CM3 and
+ * wake up after TX has finished
+ *
+ * \sa rf_core_cmd_done_dis()
+ */
+void rf_core_cmd_tx_done_en(bool poll_mode);
 
 /**
  * \brief Disable the LAST_CMD_DONE and LAST_FG_CMD_DONE interrupts.

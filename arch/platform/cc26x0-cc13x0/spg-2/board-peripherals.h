@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Graz University of Technology
+ * Copyright (c) 2017, University of Bristol - http://www.bristol.ac.uk/
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,25 +27,30 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-/**
- * \file
- *    BLE radio hardware abstraction for the TI CC26XX controller
+/*---------------------------------------------------------------------------*/
+/** \addtogroup sphere
+ * @{
  *
- * \author
- *    Michael Spoerk <michael.spoerk@tugraz.at>
+ * Defines related to SPG-2 sensors.
+ *
+ * @{
+ *
+ * \file
+ * Header file with definitions related to the sensors on the SPG-2
+ *
+ * \note   Do not include this file directly.
  */
 /*---------------------------------------------------------------------------*/
-
-#ifndef BLE_HAL_CC26XX_H_
-#define BLE_HAL_CC26XX_H_
-
-#include "os/dev/ble-hal.h"
-
-extern const struct ble_hal_driver ble_hal;
-
-void ble_hal_setup_buffers(void);
-/* process used by rf-core.c to generate interrupt polls */
-PROCESS_NAME(ble_hal_interrupt_handler);
-
-#endif /* BLE_HAL_CC26XX_H_ */
+#ifndef BOARD_PERIPHERALS_H_
+#define BOARD_PERIPHERALS_H_
+/*---------------------------------------------------------------------------*/
+#include "bmp-280-sensor.h"
+#include "hdc-1000-sensor.h"
+#include "ext-flash.h"
+/*---------------------------------------------------------------------------*/
+#endif /* BOARD_PERIPHERALS_H_ */
+/*---------------------------------------------------------------------------*/
+/**
+ * @}
+ * @}
+ */

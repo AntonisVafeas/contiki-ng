@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Graz University of Technology
+ * Copyright (c) 2014, Texas Instruments Incorporated - http://www.ti.com/
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,25 +27,42 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
+/*---------------------------------------------------------------------------*/
 /**
- * \file
- *    BLE radio hardware abstraction for the TI CC26XX controller
+ * \addtogroup sensortag-cc26xx-peripherals
+ * @{
  *
- * \author
- *    Michael Spoerk <michael.spoerk@tugraz.at>
+ * \defgroup sensortag-cc26xx-bmp-sensor SensorTag 2.0 Pressure Sensor
+ *
+ * Due to the time required for the sensor to startup, this driver is meant to
+ * be used in an asynchronous fashion. The caller must first activate the
+ * sensor by calling SENSORS_ACTIVATE(). This will trigger the sensor's startup
+ * sequence, but the call will not wait for it to complete so that the CPU can
+ * perform other tasks or drop to a low power mode.
+ *
+ * Once the sensor is stable, the driver will generate a sensors_changed event.
+ *
+ * We take readings in "Forced" mode. In this mode, the BMP will take a single
+ * measurement and it will then automatically go to sleep.
+ *
+ * SENSORS_ACTIVATE must be called again to trigger a new reading cycle
+ * @{
+ *
+ * \file
+ * Header file for the Sensortag BMP280 Altimeter / Pressure Sensor
  */
 /*---------------------------------------------------------------------------*/
-
-#ifndef BLE_HAL_CC26XX_H_
-#define BLE_HAL_CC26XX_H_
-
-#include "os/dev/ble-hal.h"
-
-extern const struct ble_hal_driver ble_hal;
-
-void ble_hal_setup_buffers(void);
-/* process used by rf-core.c to generate interrupt polls */
-PROCESS_NAME(ble_hal_interrupt_handler);
-
-#endif /* BLE_HAL_CC26XX_H_ */
+#ifndef BMP_280_SENSOR_H_
+#define BMP_280_SENSOR_H_
+/*---------------------------------------------------------------------------*/
+#define BMP_280_SENSOR_TYPE_TEMP    1
+#define BMP_280_SENSOR_TYPE_PRESS   2
+/*---------------------------------------------------------------------------*/
+extern const struct sensors_sensor bmp_280_sensor;
+/*---------------------------------------------------------------------------*/
+#endif /* BMP_280_SENSOR_H_ */
+/*---------------------------------------------------------------------------*/
+/**
+ * @}
+ * @}
+ */

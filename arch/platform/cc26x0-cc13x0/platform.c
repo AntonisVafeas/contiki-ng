@@ -83,6 +83,9 @@
 /*---------------------------------------------------------------------------*/
 /** \brief Board specific iniatialisation */
 void board_init(void);
+#ifdef BOARD_HAS_HW_WATCHDOG
+void board_hw_watchdog_init(void);
+#endif /* BOARD_HAS_HW_WATCHDOG */
 /*---------------------------------------------------------------------------*/
 #ifdef BOARD_CONF_HAS_SENSORS
 #define BOARD_HAS_SENSORS BOARD_CONF_HAS_SENSORS
@@ -229,6 +232,10 @@ platform_init_stage_three()
 #endif
 
   fade(LEDS_ORANGE);
+#if BOARD_HAS_HW_WATCHDOG
+  /* need to initialize watchdog here as initializing it in board_init() is not sufficient */
+  board_hw_watchdog_init();
+#endif /* BOARD_HAS_HW_WATCHDOG */
 }
 /*---------------------------------------------------------------------------*/
 void

@@ -1,0 +1,11 @@
+CFLAGS += -DBOARD_WEARABLE3=1
+
+CONTIKI_TARGET_DIRS += wearable3 common-sphere common
+
+BOARD_SOURCEFILES += leds-arch.c wearable3-sensors.c touch-button.c board.c oled.c
+BOARD_SOURCEFILES += ext-flash.c tps62746.c mc3672.c icm20948.c board-i2c.c mcp73832t.c
+
+### Signal that we can be programmed with cc2538-bsl
+BOARD_SUPPORTS_BSL=1
+
+MODULES += arch/dev/ext-flash

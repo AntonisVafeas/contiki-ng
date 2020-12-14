@@ -61,17 +61,27 @@
 #include <stdio.h>
 #include <string.h>
 /*---------------------------------------------------------------------------*/
+
 #define DEBUG 0
 #if DEBUG
 #define PRINTF(...) printf(__VA_ARGS__)
 #else
 #define PRINTF(...)
 #endif
+#define RF_CORE_CONF_DEBUG_CRC 1
 /*---------------------------------------------------------------------------*/
 #ifdef RF_CORE_CONF_DEBUG_CRC
 #define RF_CORE_DEBUG_CRC RF_CORE_CONF_DEBUG_CRC
 #else
 #define RF_CORE_DEBUG_CRC DEBUG
+#endif
+#ifdef BLE_CONF_WITH_SCANNER
+#define BLE_CONF_INTERRUPTS BLE_CONF_WITH_SCANNER
+#else
+#define BLE_CONF_INTERRUPTS 0
+#endif
+#if BLE_CONF_INTERRUPTS
+#include "rf-core/ble-hal/ble-hal-cc26xx.h"
 #endif
 /*---------------------------------------------------------------------------*/
 /* RF interrupts */
@@ -139,7 +149,7 @@ PROCESS(rf_core_process, "CC13xx / CC26xx RF driver");
                              | RFC_PWR_PWMCLKEN_RFERAM_M | RFC_PWR_PWMCLKEN_RFE_M \
                              | RFC_PWR_PWMCLKEN_MDMRAM_M | RFC_PWR_PWMCLKEN_MDM_M)
 /*---------------------------------------------------------------------------*/
-#define RF_CMD0	0x0607
+#define RF_CMD0 0x0607
 /*---------------------------------------------------------------------------*/
 uint8_t
 rf_core_is_accessible()
@@ -207,6 +217,10 @@ rf_core_send_cmd(uint32_t cmd, uint32_t *status)
 
   if(!interrupts_disabled) {
     ti_lib_int_master_enable();
+  }
+
+  if((*status & RF_CORE_CMDSTA_RESULT_MASK) != RF_CORE_CMDSTA_DONE) {
+    PRINTF("rf_core_send_cmd: status 0x%08lx\n", *status);
   }
 
   /*
@@ -295,7 +309,7 @@ rf_core_power_up()
 
   /* Turn on additional clocks on boot */
   HWREG(RFC_DBELL_BASE + RFC_DBELL_O_RFACKIFG) = 0;
-  HWREG(RFC_DBELL_BASE+RFC_DBELL_O_CMDR) =
+  HWREG(RFC_DBELL_BASE + RFC_DBELL_O_CMDR) =
     CMDR_DIR_CMD_2BYTE(RF_CMD0,
                        RFC_PWR_PWMCLKEN_MDMRAM | RFC_PWR_PWMCLKEN_RFERAM);
 
@@ -355,7 +369,7 @@ rf_core_stop_rat(void)
   ret = rf_core_wait_cmd_done(&cmd_stop);
   if(ret != RF_CORE_CMD_OK) {
     PRINTF("rf_core_cmd_ok: SYNC_STOP_RAT wait, CMDSTA=0x%08lx, status=0x%04x\n",
-        cmd_status, cmd_stop.status);
+           cmd_status, cmd_stop.status);
     return ret;
   }
 
@@ -521,6 +535,17 @@ rf_core_cmd_done_en(bool fg)
 
   HWREG(RFC_DBELL_NONBUF_BASE + RFC_DBELL_O_RFCPEIFG) = enabled_irqs;
   HWREG(RFC_DBELL_NONBUF_BASE + RFC_DBELL_O_RFCPEIEN) = enabled_irqs | irq;
+}
+/*---------------------------------------------------------------------------*/
+void
+rf_core_cmd_tx_done_en(bool poll_mode)
+{
+  uint32_t irq = IRQ_TX_DONE;
+  uint32_t irq_rx = IRQ_RX_OK;
+  const uint32_t enabled_irqs = poll_mode ? ENABLED_IRQS_POLL_MODE : ENABLED_IRQS;
+
+  HWREG(RFC_DBELL_NONBUF_BASE + RFC_DBELL_O_RFCPEIFG) = enabled_irqs;
+  HWREG(RFC_DBELL_NONBUF_BASE + RFC_DBELL_O_RFCPEIEN) = enabled_irqs | irq | irq_rx;
 }
 /*---------------------------------------------------------------------------*/
 void
@@ -734,7 +759,11 @@ cc26xx_rf_cpe1_isr(void)
     /* set a flag that the buffer is full*/
     rf_core_rx_is_full = true;
     /* make sure read_frame() will be called to make space in RX buffer */
+#if BLE_CONF_INTERRUPTS
+    process_poll(&ble_hal_interrupt_handler);
+#else
     process_poll(&rf_core_process);
+#endif
     /* Clear the IRQ_RX_BUF_FULL interrupt flag by writing zero to bit */
     HWREG(RFC_DBELL_NONBUF_BASE + RFC_DBELL_O_RFCPEIFG) = ~(IRQ_RX_BUF_FULL);
   }
@@ -773,7 +802,25 @@ cc26xx_rf_cpe0_isr(void)
   if(HWREG(RFC_DBELL_NONBUF_BASE + RFC_DBELL_O_RFCPEIFG) &
      (IRQ_LAST_FG_COMMAND_DONE | IRQ_LAST_COMMAND_DONE)) {
     /* Clear the two TX-related interrupt flags */
-    HWREG(RFC_DBELL_NONBUF_BASE + RFC_DBELL_O_RFCPEIFG) = 0xFFFFFFF5;
+    HWREG(RFC_DBELL_NONBUF_BASE + RFC_DBELL_O_RFCPEIFG) = ~(IRQ_LAST_FG_COMMAND_DONE | IRQ_LAST_COMMAND_DONE);
+#if BLE_CONF_INTERRUPTS
+    process_poll(&ble_hal_interrupt_handler);
+#endif
+  }
+  if(HWREG(RFC_DBELL_NONBUF_BASE + RFC_DBELL_O_RFCPEIFG) & IRQ_TX_DONE) {
+    /* Clear the  TX done  interrupt flags */
+    HWREG(RFC_DBELL_NONBUF_BASE + RFC_DBELL_O_RFCPEIFG) = ~(IRQ_TX_DONE);
+    /*
+       Use for scan response succesful tx completed . Could be used to switch from advertising to active scanning for a short duration.
+       From technical manual: If a SCAN_RSP packet has been transmitted,nTxScanRsp is incremented afterward, and a TX_DONE interrupt is raised.
+     */
+  }
+  if(HWREG(RFC_DBELL_NONBUF_BASE + RFC_DBELL_O_RFCPEIFG) & IRQ_RX_OK) {
+    /* Clear the  RX done  interrupt flags */
+    HWREG(RFC_DBELL_NONBUF_BASE + RFC_DBELL_O_RFCPEIFG) = ~(IRQ_RX_OK);
+#if BLE_CONF_INTERRUPTS
+    process_poll(&ble_hal_interrupt_handler);
+#endif
   }
 
   ti_lib_int_master_enable();

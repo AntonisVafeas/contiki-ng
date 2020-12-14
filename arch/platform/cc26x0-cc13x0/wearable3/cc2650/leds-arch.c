@@ -1,10 +1,11 @@
 /*
- * Copyright (c) 2017, Graz University of Technology
+ * Copyright (c) 2018, George Oikonomou - http://www.spd.gr
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
+ *
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
@@ -27,25 +28,14 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-/**
- * \file
- *    BLE radio hardware abstraction for the TI CC26XX controller
- *
- * \author
- *    Michael Spoerk <michael.spoerk@tugraz.at>
- */
 /*---------------------------------------------------------------------------*/
+#include "contiki.h"
+#include "dev/leds.h"
+#include "dev/gpio-hal.h"
 
-#ifndef BLE_HAL_CC26XX_H_
-#define BLE_HAL_CC26XX_H_
-
-#include "os/dev/ble-hal.h"
-
-extern const struct ble_hal_driver ble_hal;
-
-void ble_hal_setup_buffers(void);
-/* process used by rf-core.c to generate interrupt polls */
-PROCESS_NAME(ble_hal_interrupt_handler);
-
-#endif /* BLE_HAL_CC26XX_H_ */
+#include <stdbool.h>
+/*---------------------------------------------------------------------------*/
+const leds_t leds_arch_leds[] = {
+  { .pin = BOARD_IOID_LED_1, .negative_logic = false }
+};
+/*---------------------------------------------------------------------------*/

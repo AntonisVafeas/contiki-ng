@@ -1,0 +1,15 @@
+CFLAGS += -DBOARD_SPG_2=1
+
+CONTIKI_TARGET_DIRS += spg-2 common common-sphere
+BOARD_SOURCEFILES += board.c board-buttons.c xmem.c
+BOARD_SOURCEFILES += spg-2-sensors.c  sensor-common.c
+BOARD_SOURCEFILES += bmp-280-sensor.c ext-flash.c
+BOARD_SOURCEFILES += hdc-1000-sensor.c
+BOARD_SOURCEFILES += board-i2c.c flash-stats.c
+BOARD_SOURCEFILES += hw-watchdog.c
+BOARD_SOURCEFILES += fgbridge.c gslave.c
+
+### Signal that we can be programmed with cc2538-bsl
+BOARD_SUPPORTS_BSL=1
+
+MODULES += arch/dev/ext-flash

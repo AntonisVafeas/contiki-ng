@@ -49,6 +49,7 @@
 /* Advertisement channel definitions                                         */
 #define BLE_ADV_DATA_LEN         31
 #define BLE_SCAN_RESP_DATA_LEN   31
+#define BLE_SCAN_REQ_DATA_LEN    12
 #define BLE_ADV_CHANNEL_1        37
 #define BLE_ADV_CHANNEL_1_MASK   0b001
 #define BLE_ADV_CHANNEL_2        38
@@ -58,7 +59,9 @@
 #define BLE_ADV_INTERVAL_MIN     20
 #define BLE_ADV_INTERVAL_MAX     0x4000
 #define BLE_SCAN_INTERVAL_MIN  0x0004
-#define BLE_SCAN_INTERVAL_MAX  0x4000
+/*#define BLE_SCAN_INTERVAL_MAX  0x4000 */
+#define BLE_SCAN_INTERVAL_MAX 0xFFFF
+
 /*---------------------------------------------------------------------------*/
 /* Data channel definitions                                                  */
 #define BLE_DATA_CHANNEL_MIN     0
@@ -190,8 +193,14 @@ enum {
   /* scan response payload */
   RADIO_PARAM_BLE_ADV_SCAN_RESPONSE,
 
+  /* send single ADV */
+  RADIO_PARAM_BLE_ADV_SEND_SINGLE,
+
   /* 1: enable advertisement / 0: disable advertisement */
   RADIO_PARAM_BLE_ADV_ENABLE,
+
+    /* Send an advertisment using  */
+  RADIO_PARAM_BLE_ADV_CHAIN,
 
   /*-----------------------------------------------------------------------*/
   /* BLE scanning                                                          */
@@ -208,11 +217,16 @@ enum {
   /* type of own address during scanning */
   RADIO_PARAM_BLE_SCAN_OWN_ADDR_TYPE,
 
-  /* scanning channel */
-  RADIO_PARAM_BLE_SCAN_CHANNEL,
-
+  /* scan request payload */
+  RADIO_PARAM_BLE_SCAN_REQUEST,
+  /* uint8_t *peer_address for filtering */
+  RADIO_PARAM_BLE_ADV_FLTR,
+  /* uint8_t *peer_address for filtering */
+  RADIO_PARAM_BLE_SCAN_FLTR,
   /* 1: enable scanning / 0: disable scanning */
   RADIO_PARAM_BLE_SCAN_ENABLE,
+  /* Scanner output status rfc_bleScannerOutput_t */
+  RADIO_PARAM_BLE_SCAN_OUTPUT_STATUS,
 
   /*-----------------------------------------------------------------------*/
   /* BLE initiating                                                        */
@@ -259,6 +273,14 @@ struct ble_hal_driver {
    * \param addr the static device address
    */
   ble_result_t (*read_bd_addr)(uint8_t *addr);
+
+  /**
+   * Reads the output status of the ble scanner.
+   *
+   * \param ptr pointer to the rfc_bleScannerOutput_t
+   */
+  ble_result_t
+  (*read_scanner_output) (uint8_t *ptr);
 
   /**
    * Reads the size of the data buffers.
@@ -309,6 +331,25 @@ struct ble_hal_driver {
    */
   ble_result_t (*set_scan_resp_data) (unsigned short data_len,
                                       char *data);
+  /**
+   * Sends a single advertisement.
+   *
+   * \param adv_type type of ADV
+   * \param own_addr_type indicator if own address is public/random
+   */
+  ble_result_t (*send_adv_chain) (ble_adv_type_t adv_type,
+                                  ble_addr_type_t own_addr_type);
+
+  /**
+   * Sends a single advertisement.
+   *
+   * \param adv_type type of ADV
+   * \param own_addr_type indicator if own address is public/random
+   * \param adv_channel_map map of advertising channels to use
+   */
+  ble_result_t (*send_single_adv) (ble_adv_type_t adv_type,
+                                   ble_addr_type_t own_addr_type,
+                                   unsigned short adv_channel_map);
 
   /**
    * Enables/disables advertising.
@@ -331,6 +372,45 @@ struct ble_hal_driver {
                                   unsigned int scan_interval,
                                   unsigned int scan_window,
                                   ble_addr_type_t own_addr_type);
+  /**
+   * Sets the parameter for scanning.
+   *
+   * \param type scan mode
+   * \param scan_interval scan interval (interval = scan_interval * 0.625 ms)
+   * \param scan_window scan window (window = scan_window * 0.625 ms)
+   * \param own_addr_type indicator if own address is public/random
+   * \param own_addr_type indicator if own address is public/random
+   */
+  ble_result_t (*set_scan_param_fltr) (ble_scan_type_t type,
+                                       unsigned int scan_interval,
+                                       unsigned int scan_window,
+                                       ble_addr_type_t own_addr_type,
+                                       uint8_t *peer_address);
+
+  /**
+   * Sets the scan whitelist.
+   *
+   * \param data_len the length of the scan request data
+   * \param data the data of a scan request
+   */
+  ble_result_t (*set_scan_whitelist) (unsigned short data_len,
+                                      char *data);
+  /**
+   * Sets the adv whitelist.
+   *
+   * \param data_len the length of the scan request data
+   * \param data the data of a scan request
+   */
+  ble_result_t (*set_adv_whitelist) (unsigned short data_len,
+                                     char *data);
+  /**
+   * Sets the scan request data.
+   *
+   * \param data_len the length of the scan request data
+   * \param data the data of a scan request
+   */
+  ble_result_t (*set_scan_req_data) (unsigned short data_len,
+                                     char *data);
 
   /**
    * Enables/disables scanning.

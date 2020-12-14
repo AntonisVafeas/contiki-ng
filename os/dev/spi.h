@@ -112,6 +112,7 @@ typedef struct spi_device {
   uint8_t spi_pha;                  /* SPI mode phase */
   uint8_t spi_pol;                  /* SPI mode polarity */
   uint8_t spi_controller;           /* ID of SPI controller to use */
+  uint8_t is_spi_slave;             /* Zero for master, nonzero for slave */
 } spi_device_t;
 /** @} */
 /*---------------------------------------------------------------------------*/
@@ -346,6 +347,31 @@ spi_status_t spi_arch_transfer(const spi_device_t *dev,
                                const uint8_t *data, int wlen,
                                uint8_t *buf, int rlen,
                                int ignore_len);
+
+/**
+ * \brief Selects an SPI device
+ * \param dev An SPI device configuration that specifies the CS pin.
+ * \return SPI return code
+ *
+ * Clears the CS pin. It should work only if the device has already
+ * locked the SPI controller.
+ */
+spi_status_t spi_arch_select(const spi_device_t *dev);
+
+/**
+ * \brief Deselects an SPI device
+ * \param dev An SPI device configuration that specifies the CS pin.
+ * \return SPI return code
+ *
+ * Set the CS pin. Locking the SPI controller is not needed.
+ */
+spi_status_t spi_arch_deselect(const spi_device_t *dev);
+
+void spi_arch_set_slave_data(const uint8_t *data, uint16_t length);
+
+typedef void slave_data_callback (const uint8_t *data, uint16_t length);
+
+void spi_arch_set_slave_callback(slave_data_callback *);
 
 #endif /* SPI_H_ */
 /*---------------------------------------------------------------------------*/

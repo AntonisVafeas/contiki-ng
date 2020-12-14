@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Graz University of Technology
+ * Copyright (c) 2018, University of Bristol - http://www.bristol.ac.uk/
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,25 +27,23 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-/**
- * \file
- *    BLE radio hardware abstraction for the TI CC26XX controller
- *
- * \author
- *    Michael Spoerk <michael.spoerk@tugraz.at>
- */
 /*---------------------------------------------------------------------------*/
-
-#ifndef BLE_HAL_CC26XX_H_
-#define BLE_HAL_CC26XX_H_
-
-#include "os/dev/ble-hal.h"
-
-extern const struct ble_hal_driver ble_hal;
-
-void ble_hal_setup_buffers(void);
-/* process used by rf-core.c to generate interrupt polls */
-PROCESS_NAME(ble_hal_interrupt_handler);
-
-#endif /* BLE_HAL_CC26XX_H_ */
+#ifndef PROJECT_CONF_H_
+#define PROJECT_CONF_H_
+/*---------------------------------------------------------------------------*/
+/* Enable the ROM bootloader */
+#define ROM_BOOTLOADER_ENABLE                       1
+/*---------------------------------------------------------------------------*/
+#define NETSTACK_CONF_RADIO                         ble_cc2650_driver
+#define CC26XX_UART_CONF_BAUD_RATE                  1000000
+/*---------------------------------------------------------------------------*/
+#define CC26XX_UART_CONF_BAUD_RATE                  1000000
+#define LOG_CONF_LEVEL_MAC                          LOG_LEVEL_DBG
+#define CC26XX_BLE_ADDRESS_MODE                     1
+#define BLE_CONF_WITH_SCANNER                       1
+#define BLE_CONF_WITH_CALLBACK                      0
+#define BLE_CONF_WITH_SCANNER_CALLBACK              1
+#define BLE_CONF_WITH_SCANNER_CALLBACK_G_SLAVE      0
+/*---------------------------------------------------------------------------*/
+#endif /* PROJECT_CONF_H_ */
+/*---------------------------------------------------------------------------*/

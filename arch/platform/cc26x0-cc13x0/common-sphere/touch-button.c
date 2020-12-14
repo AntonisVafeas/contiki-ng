@@ -1,10 +1,11 @@
 /*
- * Copyright (c) 2017, Graz University of Technology
+ * Copyright (c) 2018, University of Bristol - http://www.bristol.ac.uk/
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
+ *
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
@@ -27,25 +28,38 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
+/*---------------------------------------------------------------------------*/
 /**
- * \file
- *    BLE radio hardware abstraction for the TI CC26XX controller
+ * \addtogroup sphere
+ * @{
  *
- * \author
- *    Michael Spoerk <michael.spoerk@tugraz.at>
+ * \file
+ * Defines SPHERE buttons for use with the button HAL
  */
 /*---------------------------------------------------------------------------*/
+#include "contiki.h"
+#include "dev/gpio-hal.h"
+#include "dev/button-hal.h"
 
-#ifndef BLE_HAL_CC26XX_H_
-#define BLE_HAL_CC26XX_H_
+#include "ti-lib.h"
 
-#include "os/dev/ble-hal.h"
+#include <stdbool.h>
+/*---------------------------------------------------------------------------*/
 
-extern const struct ble_hal_driver ble_hal;
+BUTTON_HAL_BUTTON(
+  button,                               /**< Name */
+  "Touch Button",                       /**< Description */
+  BOARD_IOID_BUTTON,                    /**< Board PIN */
+#ifdef CONF_WITH_BUTTON
+  GPIO_HAL_PIN_CFG_PULL_UP,           /**< Pull configuration */
+#else
+  GPIO_HAL_PIN_CFG_PULL_DOWN,
+#endif
+  0,                                    /**< Unique ID */
+ true);                                /**< Negative logic */
+ //Button is (active: low)
+/*---------------------------------------------------------------------------*/
+BUTTON_HAL_BUTTONS(&button);
 
-void ble_hal_setup_buffers(void);
-/* process used by rf-core.c to generate interrupt polls */
-PROCESS_NAME(ble_hal_interrupt_handler);
-
-#endif /* BLE_HAL_CC26XX_H_ */
+/*---------------------------------------------------------------------------*/
+/** @} */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Graz University of Technology
+ * Copyright (c) 2014, Texas Instruments Incorporated - http://www.ti.com/
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,25 +27,43 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
+/*---------------------------------------------------------------------------*/
 /**
- * \file
- *    BLE radio hardware abstraction for the TI CC26XX controller
+ * \addtogroup sensortag-cc26xx-peripherals
+ * @{
  *
- * \author
- *    Michael Spoerk <michael.spoerk@tugraz.at>
+ * \defgroup sensortag-cc26xx-opt-sensor SensorTag 2.0 Light Sensor
+ *
+ * Due to the time required for the sensor to startup, this driver is meant to
+ * be used in an asynchronous fashion. The caller must first activate the
+ * sensor by calling SENSORS_ACTIVATE(). This will trigger the sensor's startup
+ * sequence, but the call will not wait for it to complete so that the CPU can
+ * perform other tasks or drop to a low power mode.
+ *
+ * Once the reading and conversion are complete, the driver will generate a
+ * sensors_changed event.
+ *
+ * We use single-shot readings. In this mode, the hardware automatically goes
+ * back to its shutdown mode after the conversion is finished. However, it will
+ * still respond to I2C operations, so the last conversion can still be read
+ * out.
+ *
+ * In order to take a new reading, the caller has to use SENSORS_ACTIVATE
+ * again.
+ * @{
+ *
+ * \file
+ * Header file for the Sensortag Opt3001 light sensor
  */
 /*---------------------------------------------------------------------------*/
-
-#ifndef BLE_HAL_CC26XX_H_
-#define BLE_HAL_CC26XX_H_
-
-#include "os/dev/ble-hal.h"
-
-extern const struct ble_hal_driver ble_hal;
-
-void ble_hal_setup_buffers(void);
-/* process used by rf-core.c to generate interrupt polls */
-PROCESS_NAME(ble_hal_interrupt_handler);
-
-#endif /* BLE_HAL_CC26XX_H_ */
+#ifndef OPT_3001_SENSOR_H_
+#define OPT_3001_SENSOR_H_
+/*---------------------------------------------------------------------------*/
+extern const struct sensors_sensor opt_3001_sensor;
+/*---------------------------------------------------------------------------*/
+#endif /* OPT_3001_SENSOR_H_ */
+/*---------------------------------------------------------------------------*/
+/**
+ * @}
+ * @}
+ */

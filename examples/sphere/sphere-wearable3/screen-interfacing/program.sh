@@ -1,0 +1,1 @@
+python ../../../../tools/cc2538-bsl/cc2538-bsl.py -e -w -v -p ${PORT} sphere-wearable.hex

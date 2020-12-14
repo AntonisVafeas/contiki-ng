@@ -45,6 +45,7 @@
 #include "rf_ble_cmd.h"
 #include "rf-core/rf-core.h"
 #include "rf-core/ble-hal/rf-ble-cmd.h"
+/* SimpleLink Platform RF dev */
 
 /*---------------------------------------------------------------------------*/
 #include "sys/log.h"
@@ -54,8 +55,8 @@
 #define CMD_GET_STATUS(X)         (((rfc_radioOp_t *)X)->status)
 /*---------------------------------------------------------------------------*/
 /* values for a selection of available TX powers (values from SmartRF Studio) */
-/*static uint16_t tx_power = 0x9330;						/ * +5 dBm * / */
-static uint16_t tx_power = 0x3161;                /*  0 dBm */
+static uint16_t tx_power = 0x9330;            /* +5 dBm * / */
+/*static uint16_t tx_power = 0x3161;                / *  0 dBm * / */
 /*static uint16_t tx_power = 0x0CCB;                / *  -15 dBm * / */
 /*---------------------------------------------------------------------------*/
 /* BLE overrides */
@@ -63,7 +64,7 @@ static uint16_t tx_power = 0x3161;                /*  0 dBm */
 uint32_t ble_overrides_common[] =
 {
   /* Rx: Set LNA IB trim value based on the selected defaultPhy.mainMode setting. (NOTE: The value 0x8 is a placeholder. The value to use should be set during run-time by radio driver function.) */
-  ADI_HALFREG_OVERRIDE(0,4,0xF,0x8),
+  ADI_HALFREG_OVERRIDE(0, 4, 0xF, 0x8),
   /* Rx: Set LNA IB offset used for automatic software compensation to 0 */
   (uint32_t)0x00008883,
   /* Synth: Use 24 MHz crystal, enable extra PLL filtering */
@@ -93,7 +94,7 @@ uint32_t ble_overrides_common[] =
 uint32_t ble_overrides_1Mbps[] =
 {
   /* Rx: Set LNA IB trim to normal trim value. (NOTE: The value 0x8 is a placeholder. The value to use should be set during run-time by radio driver function.) */
-  ADI_HALFREG_OVERRIDE(0,4,0xF,0x8),
+  ADI_HALFREG_OVERRIDE(0, 4, 0xF, 0x8),
   /* Rx: Configure AGC to use gain table for improved performance */
   HW_REG_OVERRIDE(0x6084, 0x05F8),
   (uint32_t)0xFFFFFFFF,
@@ -102,14 +103,14 @@ uint32_t ble_overrides_1Mbps[] =
 uint32_t ble_overrides_2Mbps[] =
 {
   /* Rx: Set LNA IB trim to normal trim value. (NOTE: The value 0x8 is a placeholder. The value to use should be set during run-time by radio driver function.) */
-  ADI_HALFREG_OVERRIDE(0,4,0xF,0x8),
+  ADI_HALFREG_OVERRIDE(0, 4, 0xF, 0x8),
   (uint32_t)0xFFFFFFFF,
 };
 
 uint32_t ble_overrides_coded[] =
 {
   /* Rx: Set LNA IB trim to 0xF (maximum) */
-  ADI_HALFREG_OVERRIDE(0,4,0xF,0xF),
+  ADI_HALFREG_OVERRIDE(0, 4, 0xF, 0xF),
   /* Rx: Override AGC target gain to improve performance */
   HW_REG_OVERRIDE(0x6088, 0x0018),
   (uint32_t)0xFFFFFFFF,
@@ -158,10 +159,12 @@ rf_ble_cmd_setup_ble_mode(void)
 {
 #if RADIO_CONF_BLE5
   rfc_CMD_BLE5_RADIO_SETUP_t cmd;
-  
+
   /* Create radio setup command */
   rf_core_init_radio_op((rfc_radioOp_t *)&cmd, sizeof(cmd), CMD_BLE5_RADIO_SETUP);
-  
+  /* Set up tx done interrupt for scan response transmission */
+  rf_core_cmd_tx_done_en(true);
+
   cmd.startTrigger.bEnaCmd = 0;
   cmd.defaultPhy.mainMode = 1;
   cmd.defaultPhy.coding = 1;
@@ -192,17 +195,61 @@ rf_ble_cmd_setup_ble_mode(void)
 /* ADVERTISING functions                                                     */
 /*---------------------------------------------------------------------------*/
 void
+rf_ble_cmd_create_adv_seq_cmd(uint8_t *command, uint8_t *param, uint8_t *output)
+{
+  /*Initiate ble advertisment sequence */
+
+  int i;
+  const uint8_t channels[3] = { BLE_ADV_CHANNEL_1, BLE_ADV_CHANNEL_2, BLE_ADV_CHANNEL_3 };
+  /*
+     rfc_CMD_BLE_ADV_NC_t *cmd_nc;
+     for(i = 0; i < 3; ++i) {
+     cmd_nc[i] = (rfc_CMD_BLE_ADV_NC_t *)command;
+     cmd_nc[i]->commandNo = CMD_BLE_ADV_NC;
+     cmd_nc[i]->condition.rule = COND_STOP_ON_FALSE;
+     cmd_nc[i]->whitening.bOverride = 0;
+     cmd_nc[i]->channel = channels[i];
+     cmd_nc[i]->pParams = (rfc_bleAdvPar_t *)param;
+     cmd_nc[i]->startTrigger.triggerType = TRIG_NOW;
+     cmd_nc[i]->pOutput = (rfc_bleAdvOutput_t *)output;
+     }
+     for(i = 0; i < 2; ++i) {
+     cmd_nc[i + 1]->pNextOp = (rfc_radioOp_t *)&cmd_nc[i];
+     }
+     cmd_nc[2]->condition.rule = COND_NEVER;
+   */
+  rfc_CMD_BLE_ADV_NC_t *cmd_ptr = (rfc_CMD_BLE_ADV_NC_t *)command;
+  rfc_CMD_BLE_ADV_NC_t *cmd;
+  for(i = 0; i < 3; ++i) {
+    cmd = cmd_ptr;
+    cmd->commandNo = CMD_BLE_ADV_NC;
+
+    cmd->whitening.bOverride = 0;
+    cmd->channel = channels[i];
+    cmd->pParams = (rfc_bleAdvPar_t *)param;
+    cmd->startTrigger.triggerType = TRIG_NOW;
+    cmd->pOutput = (rfc_bleAdvOutput_t *)output;
+    if(i == 2) {
+      cmd->condition.rule = COND_NEVER;
+    } else {
+      cmd->pNextOp = (rfc_radioOp_t *)cmd_ptr;
+      cmd->condition.rule = COND_STOP_ON_FALSE;
+    }
+    ++cmd_ptr;
+  }
+}
+void
 rf_ble_cmd_create_adv_cmd(uint8_t *command, uint8_t channel,
                           uint8_t *param, uint8_t *output)
 {
 #if RADIO_CONF_BLE5
   rfc_CMD_BLE5_ADV_t *c = (rfc_CMD_BLE5_ADV_t *)command;
-  
+
   memset(c, 0x00, sizeof(rfc_CMD_BLE5_ADV_t));
-  
+
   c->commandNo = CMD_BLE5_ADV;
   c->rangeDelay = 0;
-  
+
   c->txPower = tx_power;
 #else
   rfc_CMD_BLE_ADV_t *c = (rfc_CMD_BLE_ADV_t *)command;
@@ -230,13 +277,13 @@ rf_ble_cmd_create_adv_params(uint8_t *param, dataQueue_t *rx_queue,
 
   p->pRxQ = rx_queue;
   p->rxConfig.bAutoFlushIgnored = 1;
-  p->rxConfig.bAutoFlushCrcErr = 0;
+  p->rxConfig.bAutoFlushCrcErr = 1;
   p->rxConfig.bAutoFlushEmpty = 1;
   p->rxConfig.bIncludeLenByte = 1;
   p->rxConfig.bIncludeCrc = 0;
   p->rxConfig.bAppendRssi = 1;
   p->rxConfig.bAppendStatus = 1;
-  p->rxConfig.bAppendTimestamp = 1;
+  p->rxConfig.bAppendTimestamp = 0;
   p->advConfig.advFilterPolicy = 0;
   p->advConfig.bStrictLenFilter = 0;
   p->advConfig.deviceAddrType = own_addr_type;
@@ -248,6 +295,157 @@ rf_ble_cmd_create_adv_params(uint8_t *param, dataQueue_t *rx_queue,
   p->endTrigger.triggerType = TRIG_NEVER;
 }
 /*---------------------------------------------------------------------------*/
+void
+rf_ble_cmd_create_adv_params_fltr(uint8_t *param, dataQueue_t *rx_queue,
+                                  uint8_t adv_data_len, uint8_t *adv_data,
+                                  uint8_t scan_resp_data_len, uint8_t *scan_resp_data,
+                                  ble_addr_type_t own_addr_type, uint8_t *own_addr,
+                                  rfc_bleWhiteListEntry_t *whitelist)
+{
+  rfc_bleAdvPar_t *p = (rfc_bleAdvPar_t *)param;
+
+  memset(p, 0x00, sizeof(rfc_bleAdvPar_t));
+
+  p->pRxQ = rx_queue;
+  p->rxConfig.bAutoFlushIgnored = 1;
+  p->rxConfig.bAutoFlushCrcErr = 1;
+  p->rxConfig.bAutoFlushEmpty = 1;
+  p->rxConfig.bIncludeLenByte = 1;
+  p->rxConfig.bIncludeCrc = 0;
+  p->rxConfig.bAppendRssi = 1;
+  p->rxConfig.bAppendStatus = 1;
+  p->rxConfig.bAppendTimestamp = 0;
+  p->advConfig.advFilterPolicy = 1;
+  p->advConfig.bStrictLenFilter = 0;
+  p->advConfig.deviceAddrType = own_addr_type;
+  p->pDeviceAddress = (uint16_t *)own_addr;
+  p->pWhiteList = whitelist;
+  p->advLen = adv_data_len;
+  p->scanRspLen = scan_resp_data_len;
+  p->pAdvData = adv_data;
+  p->pScanRspData = scan_resp_data;
+  p->endTrigger.triggerType = TRIG_NEVER;
+}
+/*---------------------------------------------------------------------------*/
+/* SCANNER functions                                                         */
+/*---------------------------------------------------------------------------*/
+void
+rf_ble_cmd_create_scanner_cmd(uint8_t *command, uint8_t channel,
+                              uint8_t *param, uint8_t *output)
+{
+#if RADIO_CONF_BLE5
+  /* TODO: BLE5 support */
+#else
+  rfc_CMD_BLE_SCANNER_t *c = (rfc_CMD_BLE_SCANNER_t *)command;
+
+  memset(c, 0x00, sizeof(rfc_CMD_BLE_SCANNER_t));
+  c->commandNo = CMD_BLE_SCANNER;
+#endif
+  c->condition.rule = COND_NEVER;
+  c->whitening.bOverride = 0;
+  c->channel = channel;
+  c->pParams = (rfc_bleScannerPar_t *)param;
+  c->startTrigger.triggerType = TRIG_NOW;
+  c->pOutput = (rfc_bleScannerOutput_t *)output;
+}
+/*---------------------------------------------------------------------------*/
+void
+rf_ble_cmd_create_scanner_params_fltr(uint8_t *param, dataQueue_t *rx_queue,
+                                      ble_scan_type_t scan_type,
+                                      uint32_t scanner_window,
+                                      uint8_t scan_req_data_len, uint8_t *scan_req_data,
+                                      ble_addr_type_t own_addr_type, uint8_t *own_addr,
+                                      rfc_bleWhiteListEntry_t *whitelist)
+{
+  rfc_bleScannerPar_t *p = (rfc_bleScannerPar_t *)param;
+
+  memset(p, 0x00, sizeof(rfc_bleScannerPar_t));
+
+  p->pRxQ = rx_queue;
+  p->rxConfig.bAutoFlushIgnored = 1;
+  p->rxConfig.bAutoFlushCrcErr = 1;
+  p->rxConfig.bAutoFlushEmpty = 1;
+  p->rxConfig.bIncludeLenByte = 1;
+  p->rxConfig.bIncludeCrc = 0;
+  p->rxConfig.bAppendRssi = 1;
+  p->rxConfig.bAppendStatus = 1; /* 1; */
+  p->rxConfig.bAppendTimestamp = 1; /* 1; */
+
+  p->scanConfig.scanFilterPolicy = 1;
+  p->scanConfig.bActiveScan = scan_type;
+  p->scanConfig.deviceAddrType = own_addr_type;
+  p->scanConfig.bStrictLenFilter = 0;
+  p->scanConfig.bAutoWlIgnore = 0; /* ignores adv after the first one */
+  /*end on succesful reception of packet */
+  p->scanConfig.bEndOnRpt = 0;
+  p->scanConfig.rpaMode = 0;
+
+  p->randomState = 0;
+  p->backoffCount = 1;
+
+  p->backoffPar.logUpperLimit = 0;
+  p->backoffPar.bLastSucceeded = 0;
+  p->backoffPar.bLastFailed = 0;
+
+  p->scanReqLen = scan_req_data_len;
+  p->pScanReqData = scan_req_data;
+  p->pDeviceAddress = (uint16_t *)own_addr;
+  /*//rfc_bleWhiteListEntry_t */
+  p->pWhiteList = whitelist;
+  /*->pWhiteList = NULL; */
+  p->timeoutTrigger.triggerType = TRIG_NEVER;
+  p->timeoutTime = 0;
+  p->endTrigger.triggerType = TRIG_REL_START;
+  p->endTime = scanner_window;
+}
+/*---------------------------------------------------------------------------*/
+void
+rf_ble_cmd_create_scanner_params(uint8_t *param, dataQueue_t *rx_queue,
+                                 ble_scan_type_t scan_type,
+                                 uint32_t scanner_window,
+                                 uint8_t scan_req_data_len, uint8_t *scan_req_data,
+                                 ble_addr_type_t own_addr_type, uint8_t *own_addr)
+{
+  rfc_bleScannerPar_t *p = (rfc_bleScannerPar_t *)param;
+
+  memset(p, 0x00, sizeof(rfc_bleScannerPar_t));
+
+  p->pRxQ = rx_queue;
+  p->rxConfig.bAutoFlushIgnored = 1;
+  p->rxConfig.bAutoFlushCrcErr = 0;
+  p->rxConfig.bAutoFlushEmpty = 1;
+  p->rxConfig.bIncludeLenByte = 1;
+  p->rxConfig.bIncludeCrc = 0;
+  p->rxConfig.bAppendRssi = 1;
+  p->rxConfig.bAppendStatus = 1; /* 1; */
+  p->rxConfig.bAppendTimestamp = 0; /* 1; */
+
+  p->scanConfig.scanFilterPolicy = 0;
+  p->scanConfig.bActiveScan = scan_type;
+  p->scanConfig.deviceAddrType = own_addr_type;
+  p->scanConfig.bStrictLenFilter = 0;
+  p->scanConfig.bAutoWlIgnore = 0;
+  /*end on succesful reception of packet */
+  p->scanConfig.bEndOnRpt = 0;
+  p->scanConfig.rpaMode = 0;
+
+  p->randomState = 0;
+  p->backoffCount = 0;
+
+  p->backoffPar.logUpperLimit = 0;
+  p->backoffPar.bLastSucceeded = 0;
+  p->backoffPar.bLastFailed = 0;
+
+  p->scanReqLen = scan_req_data_len;
+  p->pScanReqData = scan_req_data;
+  p->pDeviceAddress = (uint16_t *)own_addr;
+  p->pWhiteList = NULL;
+  p->timeoutTrigger.triggerType = TRIG_NEVER;
+  p->timeoutTime = 0;
+  p->endTrigger.triggerType = TRIG_REL_START;
+  p->endTime = scanner_window;
+}
+/*---------------------------------------------------------------------------*/
 /* INITIATOR functions                                                       */
 /*---------------------------------------------------------------------------*/
 void
@@ -256,9 +454,9 @@ rf_ble_cmd_create_initiator_cmd(uint8_t *cmd, uint8_t channel, uint8_t *params,
 {
 #if RADIO_CONF_BLE5
   rfc_CMD_BLE5_INITIATOR_t *c = (rfc_CMD_BLE5_INITIATOR_t *)cmd;
-  
+
   memset(c, 0x00, sizeof(rfc_CMD_BLE5_INITIATOR_t));
-  
+
   c->commandNo = CMD_BLE5_INITIATOR;
   c->condition.rule = COND_NEVER;
   c->whitening.bOverride = 0;
@@ -267,14 +465,14 @@ rf_ble_cmd_create_initiator_cmd(uint8_t *cmd, uint8_t channel, uint8_t *params,
   c->startTrigger.triggerType = TRIG_ABSTIME;
   c->startTime = start_time;
   c->pOutput = (rfc_ble5ScanInitOutput_t *)output;
-  
+
   c->txPower = tx_power;
   c->rangeDelay = 0;
 #else
   rfc_CMD_BLE_INITIATOR_t *c = (rfc_CMD_BLE_INITIATOR_t *)cmd;
-  
+
   memset(c, 0x00, sizeof(rfc_CMD_BLE_INITIATOR_t));
-  
+
   c->commandNo = CMD_BLE_INITIATOR;
   c->condition.rule = COND_NEVER;
   c->whitening.bOverride = 0;
@@ -312,14 +510,14 @@ rf_ble_cmd_create_initiator_params(uint8_t *param, dataQueue_t *rx_queue,
   p->rxConfig.bAppendRssi = 1;
   p->rxConfig.bAppendStatus = 1;
   p->rxConfig.bAppendTimestamp = 1;
-  
+
   /*    p->initConfig.bUseWhiteList = 0; */
   p->initConfig.bUseWhiteList = 1;
   p->initConfig.bDynamicWinOffset = 0;
   p->initConfig.deviceAddrType = own_addr_type;
   p->initConfig.peerAddrType = peer_addr_type;
   p->initConfig.bStrictLenFilter = 1;
-  
+
   p->connectReqLen = 22;
   p->pConnectReqData = conn_req_data;
   p->pDeviceAddress = (uint16_t *)own_addr;
@@ -338,9 +536,9 @@ rf_ble_cmd_create_slave_cmd(uint8_t *cmd, uint8_t channel, uint8_t *params,
 {
 #if RADIO_CONF_BLE5
   rfc_CMD_BLE5_SLAVE_t *c = (rfc_CMD_BLE5_SLAVE_t *)cmd;
-  
+
   memset(c, 0x00, sizeof(rfc_CMD_BLE5_SLAVE_t));
-  
+
   c->commandNo = CMD_BLE5_SLAVE;
   c->condition.rule = COND_NEVER;
   c->whitening.bOverride = 0;
@@ -349,7 +547,7 @@ rf_ble_cmd_create_slave_cmd(uint8_t *cmd, uint8_t channel, uint8_t *params,
   c->startTrigger.triggerType = TRIG_ABSTIME;
   c->startTime = start_time;
   c->pOutput = (rfc_bleMasterSlaveOutput_t *)output;
-  
+
   c->phyMode.mainMode = 1;
   c->phyMode.coding = 1;
   c->txPower = tx_power;
@@ -431,9 +629,9 @@ rf_ble_cmd_create_master_cmd(uint8_t *cmd, uint8_t channel, uint8_t *params,
 {
 #if RADIO_CONF_BLE5
   rfc_CMD_BLE5_MASTER_t *c = (rfc_CMD_BLE5_MASTER_t *)cmd;
-  
+
   memset(c, 0x00, sizeof(rfc_CMD_BLE5_MASTER_t));
-  
+
   c->commandNo = CMD_BLE5_MASTER;
   c->condition.rule = COND_NEVER;
   c->whitening.bOverride = 0;
@@ -442,16 +640,16 @@ rf_ble_cmd_create_master_cmd(uint8_t *cmd, uint8_t channel, uint8_t *params,
   c->startTrigger.triggerType = TRIG_ABSTIME;
   c->startTime = start_time;
   c->pOutput = (rfc_bleMasterSlaveOutput_t *)output;
-  
+
   c->phyMode.mainMode = 1;
   c->phyMode.coding = 1;
   c->txPower = tx_power;
   c->rangeDelay = 0;
 #else
   rfc_CMD_BLE_MASTER_t *c = (rfc_CMD_BLE_MASTER_t *)cmd;
-  
+
   memset(c, 0x00, sizeof(rfc_CMD_BLE_MASTER_t));
-  
+
   c->commandNo = CMD_BLE_MASTER;
   c->condition.rule = COND_NEVER;
   c->whitening.bOverride = 0;
@@ -486,7 +684,7 @@ rf_ble_cmd_create_master_params(uint8_t *params, dataQueue_t *rx_queue,
   p->rxConfig.bAppendRssi = 1;
   p->rxConfig.bAppendStatus = 1;
   p->rxConfig.bAppendTimestamp = 1;
-  
+
   if(first_packet) {
     /* set parameters for first packet according to TI Technical Reference Manual */
     p->seqStat.lastRxSn = 1;
@@ -498,7 +696,7 @@ rf_ble_cmd_create_master_params(uint8_t *params, dataQueue_t *rx_queue,
     p->seqStat.bLlCtrlAckRx = 0;
     p->seqStat.bLlCtrlAckPending = 0;
   }
-  
+
   p->maxPkt = 12;
   p->accessAddress = access_address;
   p->crcInit0 = crc_init_0;

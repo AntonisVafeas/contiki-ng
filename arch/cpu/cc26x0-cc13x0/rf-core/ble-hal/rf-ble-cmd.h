@@ -71,6 +71,17 @@ unsigned short rf_ble_cmd_wait(uint8_t *cmd);
  * \return RF_CORE_CMD_OK or RF_CORE_CMD_ERROR
  */
 unsigned short rf_ble_cmd_setup_ble_mode(void);
+/*---------------------------------------------------------------------------*/
+/**
+ * \brief Creates a BLE radio command structure that enables
+ *      BLE advertisement on all 3 channels when sent to the radio core
+ * \param command A pointer to command that is created
+ * \param param   A pointer to the radio command parameters
+ * \param output  A pointer to the radio command output
+ */
+void rf_ble_cmd_create_adv_seq_cmd(uint8_t *command, uint8_t *param, uint8_t *output);
+
+/*---------------------------------------------------------------------------*/
 
 /*---------------------------------------------------------------------------*/
 /**
@@ -105,6 +116,90 @@ void rf_ble_cmd_create_adv_params(uint8_t *param, dataQueue_t *rx_queue,
                                   uint8_t adv_data_len, uint8_t *adv_data,
                                   uint8_t scan_resp_data_len, uint8_t *scan_resp_data,
                                   ble_addr_type_t own_addr_type, uint8_t *own_addr);
+
+/*---------------------------------------------------------------------------*/
+/**
+ * \brief Creates BLE radio command parameters that are used to enable
+ *      BLE advertisement on the radio core
+ * \param param	    A pointer to parameter structure that is created
+ * \param rx_queue  A pointer to the RX queue that is used
+ * \param adv_data_len
+ *          The length of the advertisement data
+ * \param adv_data  A pointer to the advertisement data that is advertised
+ * \param scan_resp_data_len
+ *          The length of the scan response data
+ * \param scan_resp_data
+ *          A pointer to the scan response data
+ * \param own_addr_type
+ *          Either BLE_ADDR_TYPE_PUBLIC or BLE_ADDR_TYPE_RANDOM
+ * \param own_addr A pointer to the device address that is used as own address
+ * \param whitelist A pointer to the device address that is used for filtering
+ */
+void rf_ble_cmd_create_adv_params_fltr(uint8_t *param, dataQueue_t *rx_queue,
+                                       uint8_t adv_data_len, uint8_t *adv_data,
+                                       uint8_t scan_resp_data_len, uint8_t *scan_resp_data,
+                                       ble_addr_type_t own_addr_type, uint8_t *own_addr,
+                                       rfc_bleWhiteListEntry_t *whitelist);
+
+/*---------------------------------------------------------------------------*/
+/**
+ * \brief Creates a BLE radio command structure that enables
+ *      BLE scanning when sent to the radio core
+ * \param command A pointer to command that is created
+ * \param channel The BLE channel used to scan for advertisements
+ * \param param   A pointer to the radio command parameters
+ * \param output  A pointer to the radio command output
+ */
+void rf_ble_cmd_create_scanner_cmd(uint8_t *command, uint8_t channel,
+                                   uint8_t *param, uint8_t *output);
+
+/*---------------------------------------------------------------------------*/
+/**
+ * \brief Creates BLE radio command parameters that are used to enable
+ *      BLE scanning on the radio core
+ * \param param	    A pointer to parameter structure that is created
+ * \param rx_queue  A pointer to the RX queue that is used
+ * \param scan_type Scan mode (active or passive)
+ * \param scanner_window
+ *          The time in rf_core_ticks when to stop scanning
+ * \param scan_req_data_len
+ *          The length of the scan request data
+ * \param scan_req_data
+ *          A pointer to the scan request data
+ * \param own_addr_type
+ *          Either BLE_ADDR_TYPE_PUBLIC or BLE_ADDR_TYPE_RANDOM
+ * \param own_addr A pointer to the device address that is used as own address
+ * \param whitelist A pointer to the device address that is used for filtering
+ */
+void rf_ble_cmd_create_scanner_params_fltr(uint8_t *param, dataQueue_t *rx_queue,
+                                           ble_scan_type_t scan_type,
+                                           uint32_t scanner_window,
+                                           uint8_t scan_req_data_len, uint8_t *scan_req_data,
+                                           ble_addr_type_t own_addr_type, uint8_t *own_addr,
+                                           rfc_bleWhiteListEntry_t *whitelist);
+
+/*---------------------------------------------------------------------------*/
+/**
+ * \brief Creates BLE radio command parameters that are used to enable
+ *      BLE scanning on the radio core
+ * \param param	    A pointer to parameter structure that is created
+ * \param rx_queue  A pointer to the RX queue that is used
+ * \param scan_type Scan mode (active or passive)
+ * \param scanner_window
+ *          The time in rf_core_ticks when to stop scanning
+ * \param scan_req_data_len
+ *          The length of the scan request data
+ * \param scan_req_data
+ *          A pointer to the scan request data
+ * \param own_addr_type
+ *          Either BLE_ADDR_TYPE_PUBLIC or BLE_ADDR_TYPE_RANDOM
+ * \param own_addr A pointer to the device address that is used as own address
+ */
+void rf_ble_cmd_create_scanner_params(uint8_t *param, dataQueue_t *rx_queue,
+                                      ble_scan_type_t scan_type,
+                                      uint32_t scanner_window,
+                                      uint8_t scan_req_data_len, uint8_t *scan_req_data,
+                                      ble_addr_type_t own_addr_type, uint8_t *own_addr);
 
 /*---------------------------------------------------------------------------*/
 /**

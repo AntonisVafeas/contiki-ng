@@ -1,0 +1,12 @@
+CONTIKI_PROJECT = sphere-wearable
+all: $(CONTIKI_PROJECT)
+
+BOARD=wearable3/cc2650
+
+MAKE_MAC = MAKE_MAC_NULLMAC
+MAKE_NET = MAKE_NET_NULLNET
+
+BAUDRATE = 115200
+
+CONTIKI = ../../../..
+include $(CONTIKI)/Makefile.include

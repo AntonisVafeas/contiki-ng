@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Graz University of Technology
+ * Copyright (c) 2017, University of Bristol - http://www.bristol.ac.uk/
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,25 +27,33 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-/**
- * \file
- *    BLE radio hardware abstraction for the TI CC26XX controller
+/*---------------------------------------------------------------------------*/
+/** \addtogroup sphere
+ * @{
  *
- * \author
- *    Michael Spoerk <michael.spoerk@tugraz.at>
+ * \file
+ *  Header file for TPS62746 regulator driver
  */
 /*---------------------------------------------------------------------------*/
 
-#ifndef BLE_HAL_CC26XX_H_
-#define BLE_HAL_CC26XX_H_
+#ifndef TPS62746_H_
+#define TPS62746_H_
 
-#include "os/dev/ble-hal.h"
+/**
+ * \brief Initialises TPS62746
+ *
+ */
+void tps62746_init(void);
 
-extern const struct ble_hal_driver ble_hal;
+/**
+ * \brief Reads the battery voltage
+ * \return The battery voltage in mV
+ *
+ */
+uint16_t tps62746_value(void);
 
-void ble_hal_setup_buffers(void);
-/* process used by rf-core.c to generate interrupt polls */
-PROCESS_NAME(ble_hal_interrupt_handler);
-
-#endif /* BLE_HAL_CC26XX_H_ */
+#endif /* TPS62746_H_ */
+/*---------------------------------------------------------------------------*/
+/**
+ * @}
+ */

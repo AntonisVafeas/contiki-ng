@@ -160,6 +160,18 @@ set_value(radio_param_t param, radio_value_t value)
     }
     ble_hal.set_adv_enable(value);
     return RADIO_RESULT_OK;
+  case RADIO_PARAM_BLE_ADV_CHAIN:
+    if(value) {
+      /* set the advertisement parameter before enabling */
+      ble_hal.set_adv_param(adv_interval, adv_type,
+                            adv_own_addr_type, adv_channel_map);
+    }
+    return ble_hal.send_adv_chain(adv_type, adv_own_addr_type) == BLE_RESULT_OK ?
+           RADIO_RESULT_OK :
+           RADIO_RESULT_ERROR;
+  case RADIO_PARAM_BLE_ADV_SEND_SINGLE:
+    ble_hal.send_single_adv(adv_type, adv_own_addr_type, adv_channel_map);
+    return RADIO_RESULT_OK;
   case RADIO_PARAM_BLE_SCAN_INTERVAL:
     if((value > BLE_SCAN_INTERVAL_MAX) || (value < BLE_SCAN_INTERVAL_MIN)) {
       return RADIO_RESULT_INVALID_VALUE;
@@ -183,8 +195,9 @@ set_value(radio_param_t param, radio_value_t value)
       ble_hal.set_scan_param(scan_type, scan_interval,
                              scan_window, scan_own_addr_type);
     }
-    ble_hal.set_scan_enable(value, 0);
-    return RADIO_RESULT_OK;
+    return ble_hal.set_scan_enable(value, 0) == BLE_RESULT_OK ?
+           RADIO_RESULT_OK :
+           RADIO_RESULT_ERROR;
   case RADIO_PARAM_BLE_PEER_ADDR_TYPE:
     initiator_peer_addr_type = value;
     return RADIO_RESULT_OK;
@@ -231,6 +244,12 @@ get_object(radio_param_t param, void *dest, size_t size)
     }
     ble_hal.read_bd_addr(dest);
     return RADIO_RESULT_OK;
+  case RADIO_PARAM_BLE_SCAN_OUTPUT_STATUS:
+    /* Scanner output status rfc_bleScannerOutput_t */
+    if(ble_hal.read_scanner_output(dest) != BLE_RESULT_OK) {
+      return RADIO_RESULT_INVALID_VALUE;
+    }
+    return RADIO_RESULT_OK;
   }
   return RADIO_RESULT_NOT_SUPPORTED;
 }
@@ -240,7 +259,7 @@ set_object(radio_param_t param, const void *src, size_t size)
 {
   switch(param) {
   case RADIO_PARAM_BLE_ADV_PAYLOAD:
-    if(size <= 0 || size >= BLE_ADV_DATA_LEN || !src) {
+    if(size <= 0 || size > BLE_ADV_DATA_LEN || !src) {
       return RADIO_RESULT_INVALID_VALUE;
     }
     ble_hal.set_adv_data((unsigned short)size, (char *)src);
@@ -250,6 +269,20 @@ set_object(radio_param_t param, const void *src, size_t size)
       return RADIO_RESULT_INVALID_VALUE;
     }
     ble_hal.set_scan_resp_data((unsigned short)size, (char *)src);
+    return RADIO_RESULT_OK;
+  case RADIO_PARAM_BLE_ADV_FLTR:
+    ble_hal.set_adv_whitelist((unsigned short)size, (char *)src);
+    return RADIO_RESULT_OK;
+  case RADIO_PARAM_BLE_SCAN_FLTR:
+    /*check for address if it exist in the whitelist */
+    /* populate the scanner_param.whitelist_buffers */
+    ble_hal.set_scan_whitelist((unsigned short)size, (char *)src);
+    return RADIO_RESULT_OK;
+  case RADIO_PARAM_BLE_SCAN_REQUEST:
+    if(size <= 0 || size >= BLE_SCAN_REQ_DATA_LEN || !src) {
+      return RADIO_RESULT_INVALID_VALUE;
+    }
+    ble_hal.set_scan_req_data((unsigned short)size, (char *)src);
     return RADIO_RESULT_OK;
   case RADIO_PARAM_BLE_PEER_ADDR:
     if(size <= 0 || size > BLE_ADDR_SIZE || !src) {

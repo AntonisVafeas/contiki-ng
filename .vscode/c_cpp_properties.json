@@ -1,0 +1,66 @@
+{
+    "configurations": [
+        {
+            "name": "SPHERE Wearable 3",
+            "includePath": [
+                "${workspaceFolder}",
+                "${workspaceFolder}/os/**",
+                "${workspaceFolder}/arch/cpu/**",
+                "${workspaceFolder}/arch/dev/**",
+                "${workspaceFolder}/arch/platform/cc26x0-cc13x0",
+                "${workspaceFolder}/arch/platform/cc26x0-cc13x0/wearable3/**",
+                "${workspaceFolder}/arch/platform/cc26x0-cc13x0/common-sphere/**"
+            ],
+            "forcedInclude": [
+                "${workspaceFolder}/arch/platform/cc26x0-cc13x0/wearable3/cc2650/board.h"
+            ],
+            "defines": [
+                "BLE_CONF_WITH_SCANNER_CALLBACK",
+                "BOARD_WEARABLE3"
+            ],
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "gnu11",
+            "cppStandard": "gnu++14",
+            "intelliSenseMode": "gcc-x64"
+        },
+        {
+            "name": "Generic BLE Scanner",
+            "includePath": [
+                "${workspaceFolder}",
+                "${workspaceFolder}/os/**",
+                "${workspaceFolder}/arch/cpu/**",
+                "${workspaceFolder}/arch/dev/**",
+                "${workspaceFolder}/arch/platform/cc26x0-cc13x0",
+                "${workspaceFolder}/arch/platform/cc26x0-cc13x0/launchpad/**",
+                "${workspaceFolder}/arch/platform/cc26x0-cc13x0/common-sphere/**"
+            ],
+            "defines": [
+                "BLE_CONF_WITH_SCANNER_CALLBACK"
+            ],
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "gnu11",
+            "cppStandard": "gnu++14",
+            "intelliSenseMode": "gcc-x64"
+        },
+        {
+            "name": "SPHERE gateway BLE",
+            "includePath": [
+                "${workspaceFolder}",
+                "${workspaceFolder}/os/**",
+                "${workspaceFolder}/arch/cpu/**",
+                "${workspaceFolder}/arch/dev/**",
+                "${workspaceFolder}/arch/platform/cc26x0-cc13x0",
+                "${workspaceFolder}/arch/platform/cc26x0-cc13x0/spg-2/**",
+                "${workspaceFolder}/arch/platform/cc26x0-cc13x0/common-sphere/**"
+            ],
+            "defines": [
+                "BLE_CONF_WITH_SCANNER_CALLBACK"
+            ],
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "gnu11",
+            "cppStandard": "gnu++14",
+            "intelliSenseMode": "gcc-x64"
+        }
+    ],
+    "version": 4
+}

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Graz University of Technology
+ * Copyright (c) 2014, Texas Instruments Incorporated - http://www.ti.com/
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,25 +27,53 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
+/*---------------------------------------------------------------------------*/
 /**
- * \file
- *    BLE radio hardware abstraction for the TI CC26XX controller
+ * \addtogroup sensortag-cc26xx-sensor-common
+ * @{
  *
- * \author
- *    Michael Spoerk <michael.spoerk@tugraz.at>
+ * \file
+ * Utilities common among SensorTag sensors
  */
 /*---------------------------------------------------------------------------*/
+#include "sensor-common.h"
+#include "board-i2c.h"
+/*---------------------------------------------------------------------------*/
+/* Data to use when an error occurs */
+#define ERROR_DATA                         0xCC
+/*---------------------------------------------------------------------------*/
+static uint8_t buffer[32];
+/*---------------------------------------------------------------------------*/
+bool
+sensor_common_read_reg(uint8_t addr, uint8_t *buf, uint8_t len)
+{
+  return board_i2c_write_read(&addr, 1, buf, len);
+}
+/*---------------------------------------------------------------------------*/
+bool
+sensor_common_write_reg(uint8_t addr, uint8_t *buf, uint8_t len)
+{
+  uint8_t i;
+  uint8_t *p = buffer;
 
-#ifndef BLE_HAL_CC26XX_H_
-#define BLE_HAL_CC26XX_H_
+  /* Copy address and data to local buffer for burst write */
+  *p++ = addr;
+  for(i = 0; i < len; i++) {
+    *p++ = *buf++;
+  }
+  len++;
 
-#include "os/dev/ble-hal.h"
-
-extern const struct ble_hal_driver ble_hal;
-
-void ble_hal_setup_buffers(void);
-/* process used by rf-core.c to generate interrupt polls */
-PROCESS_NAME(ble_hal_interrupt_handler);
-
-#endif /* BLE_HAL_CC26XX_H_ */
+  /* Send data */
+  return board_i2c_write(buffer, len);
+}
+/*---------------------------------------------------------------------------*/
+void
+sensor_common_set_error_data(uint8_t *buf, uint8_t len)
+{
+  while(len > 0) {
+    len--;
+    buf[len] = ERROR_DATA;
+  }
+}
+/*---------------------------------------------------------------------------*/
+/** @} */

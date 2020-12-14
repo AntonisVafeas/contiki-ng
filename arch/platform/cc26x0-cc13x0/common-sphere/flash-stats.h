@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Graz University of Technology
+ * Copyright (c) 2016, University of Bristol - http://www.bristol.ac.uk
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,25 +27,40 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
+/*---------------------------------------------------------------------------*/
 /**
- * \file
- *    BLE radio hardware abstraction for the TI CC26XX controller
+ * \addtogroup sphere
+ * @{
  *
- * \author
- *    Michael Spoerk <michael.spoerk@tugraz.at>
+ * \file
+ * Header file for permanent statistics, stored in the flash
  */
 /*---------------------------------------------------------------------------*/
+#ifndef FLASH_STATS_H_
+#define FLASH_STATS_H_
+/*---------------------------------------------------------------------------*/
+#include <stdint.h>
+#include <stdlib.h>
+#include <stdbool.h>
+/*---------------------------------------------------------------------------*/
+/**
+ * \brief Get number of reboots and the cause of the last one
+ */
+uint8_t flash_stats_reboot_get(uint8_t *is_flash_ok, uint16_t *num_reboots, uint8_t *is_deliberate);
 
-#ifndef BLE_HAL_CC26XX_H_
-#define BLE_HAL_CC26XX_H_
+/**
+ * \brief Clear / set the reason of reboot (used before doing a deliberate reboot)
+ */
+bool flash_stats_reboot_set(bool is_deliberate);
 
-#include "os/dev/ble-hal.h"
+/**
+ * \brief Initialize the module
+ */
+bool flash_stats_reboot_init(void);
 
-extern const struct ble_hal_driver ble_hal;
-
-void ble_hal_setup_buffers(void);
-/* process used by rf-core.c to generate interrupt polls */
-PROCESS_NAME(ble_hal_interrupt_handler);
-
-#endif /* BLE_HAL_CC26XX_H_ */
+/*---------------------------------------------------------------------------*/
+#endif /* FLASH_STATS_H_ */
+/*---------------------------------------------------------------------------*/
+/**
+ * @}
+ */
