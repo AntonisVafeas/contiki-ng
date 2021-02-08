@@ -1,6 +1,11 @@
+# Contiki-NG devel branch fork
+
+SPHERE SPG-2 and Wearable3 Drivers and Bluetooth implementation on Contiki-NG devel branch fork
+This repository is a branch of Contiki-NG develop branch later updated to release-4.5
+
 <img src="https://github.com/contiki-ng/contiki-ng.github.io/blob/master/images/logo/Contiki_logo_2RGB.png" alt="Logo" width="256">
 
-# Contiki-NG: The OS for Next Generation IoT Devices
+## Contiki-NG: The OS for Next Generation IoT Devices
 
 [![Build Status](https://travis-ci.org/contiki-ng/contiki-ng.svg?branch=master)](https://travis-ci.org/contiki-ng/contiki-ng/branches)
 [![Documentation Status](https://readthedocs.org/projects/contiki-ng/badge/?version=master)](https://contiki-ng.readthedocs.io/en/master/?badge=master)
