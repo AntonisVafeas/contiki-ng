@@ -1,4 +1,4 @@
-# Contiki-NG devel branch fork
+# Contiki-NG-SPHERE-BLE
 
 SPHERE SPG-2 and Wearable3 Drivers and Bluetooth implementation on Contiki-NG devel branch fork
 This repository is a branch of Contiki-NG develop branch later updated to release-4.6
